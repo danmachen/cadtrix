@@ -1,0 +1,31 @@
+Public Sub Main()
+Exportstp()
+End Sub
+Public Sub Exportstp()
+
+doc = ThisDoc.Document
+ 'check file type 
+If doc.DocumentType = kPartDocumentObject Then
+          
+		strFolder = ThisDoc.Path & "\" & "UNRELEASED_" & ThisDoc.FileName(False) &".stp"
+          
+ThisDoc.Document.SaveAs(strFolder , True)
+MessageBox.Show("The stp file has been saved.", "iLogic")
+
+
+iLogicVb.UpdateWhenDone = True
+ 
+Else If doc.DocumentType = kAssemblyDocumentObject Then
+          
+          strFolder = ThisDoc.Path & "\" & "UNRELEASED_" & ThisDoc.FileName(False) &".stp"
+          
+ThisDoc.Document.SaveAs(strFolder , True)
+MessageBox.Show("The stp file has been saved.", "iLogic")
+
+Else If doc.DocumentType = kDrawingDocumentObject
+MessageBox.Show("This is a drawing file.", "iLogic")
+
+End If
+End Sub
+
+

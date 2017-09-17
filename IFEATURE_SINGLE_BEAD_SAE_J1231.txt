@@ -1,0 +1,238 @@
+﻿
+'Code developed by Xavier Jurdieu for Vantage Power Ltd - 13/09/2017 - V1
+'If code or iFeature needs to be modified contact: xavier.jurdieu@vantage-power.com
+
+Public Sub Main()
+	' Check to make sure the active document is a part.
+	If ThisApplication.ActiveDocumentType <> DocumentTypeEnum.kPartDocumentObject Then	
+		MessageBox.Show("A part document must be open.","Error")
+  		Exit Sub
+	End If
+
+	' Get the part document and component definition of the active document.
+	Dim oPartDoc As PartDocument
+	oPartDoc = ThisApplication.ActiveDocument
+		
+	Dim oPartDef As PartComponentDefinition
+	oPartDef = oPartDoc.ComponentDefinition
+	
+	'Get the inside or outside face.
+	Dim oFace1 As Face
+	oFace1 = ThisApplication.CommandManager.Pick(SelectionFilterEnum.kPartFaceCylindricalFilter, "Select inside or outside tube face")
+	
+	Dim oFaceCount1 As Double
+	oFaceCount1 = oFace1.Edges.Count
+	
+	Dim dMin As Double
+	Dim dMax As Double
+	Dim dLength11 As Double
+	Dim dLength12 As Double
+	Dim dLength21 As Double
+	Dim dLength22 As Double
+	
+	Dim OEdge11 As Edge
+	Dim OEdge12 As Edge
+	
+	'Evaluate length of edges from first selected face.
+	If oFaceCount1 = 2 Then
+			
+			OEdge11 = oFace1.Edges(1)'First edge of first face
+			OEdge12 = oFace1.Edges(2)'Second edge of first face
+			
+			'Evaluate length of two edges from face
+			Call OEdge11.Evaluator.GetParamExtents(dMin, dMax)
+			Call OEdge11.Evaluator.GetLengthAtParam(dMin, dMax, dLength11)
+			Call OEdge12.Evaluator.GetParamExtents(dMin, dMax)
+			Call OEdge12.Evaluator.GetLengthAtParam(dMin, dMax, dLength12)
+	
+			dLength11= Round(dLength11,5)
+			dLength12= Round(dLength12,5)
+	
+			'Check for modeling errors
+			If dLength11 = dLength12 Then
+				Else
+					MessageBox.Show("Face selection is not valid. Please try again.", "Title")
+					Exit Sub
+			End If		
+		Else
+			MessageBox.Show("Face selection is not valid. First face has " & oFaceCount1 & " edges instead of two edges. Please try again.", "Title")
+			Exit Sub
+	End If		
+	
+	'Get the inside or outside face.
+	Dim oFace2 As Face
+	oFace2 = ThisApplication.CommandManager.Pick(SelectionFilterEnum.kPartFaceCylindricalFilter, "Select inside or outside tube face")
+	
+	Dim oFaceCount2 As Double
+	oFaceCount2 = oFace2.Edges.Count
+	Dim OEdge21 As Edge
+	Dim OEdge22 As Edge
+	
+	'Evaluate length of edges from second selected face.
+	If oFaceCount2 = 2 Then
+
+		OEdge21 = oFace2.Edges(1)'First edge of second face
+		OEdge22 = oFace2.Edges(2)'Second edge of second face
+
+		Call OEdge21.Evaluator.GetParamExtents(dMin, dMax)
+		Call OEdge21.Evaluator.GetLengthAtParam(dMin, dMax, dLength21)
+		Call OEdge22.Evaluator.GetParamExtents(dMin, dMax)
+		Call OEdge22.Evaluator.GetLengthAtParam(dMin, dMax, dLength22)
+		dLength21= Round(dLength21,5)
+		dLength22= Round(dLength22,5)
+		
+		If dLength21 = dLength22 Then
+		Else
+			MessageBox.Show("Face selection is not valid. Please try again.", "Title")
+			Exit Sub
+	End If		
+	Else
+		MessageBox.Show("Face selection is not valid. First face has " & oFaceCount2 & " edges instead of two edges. Please try again.", "Title")
+		Exit Sub
+	End If
+
+	'Calculate diameters and set to millimeter
+    If dLength21 > 0 And dLength11 > 0 And Not dLength21 = dLength11 Then
+		IFEATURE_ID = Round((MinOfMany(dLength21,dLength11)*10)/PI,3) & " mm"
+		IFEATURE_OD = Round((MaxOfMany(dLength21,dLength11)*10)/PI,3) & " mm"
+
+	Else If dLength21 = dLength11 Then
+		MessageBox.Show("Oops, you have selected the same face twice. Please try again.", "Selection error")
+		Exit Sub
+	Else
+		MessageBox.Show("Oops, selected faces are not valid.", "Try again")
+		Exit Sub
+	End If
+
+	' Get the selected face to use as input for the iFeature.
+	Dim oFace3 As Face
+	oFace3 = ThisApplication.CommandManager.Pick(SelectionFilterEnum.kPartFacePlanarFilter, "Select end face")
+	
+	' Check if previous faces share same edges with end face
+	Dim OEdge31 As Edge
+	Dim OEdge32 As Edge
+	OEdge31 = oFace3.Edges(1)
+	OEdge32 = oFace3.Edges(2)
+	
+	If OEdge31 Is OEdge11 Or OEdge31 Is OEdge12 Or OEdge31 Is OEdge21 Or OEdge31 Is OEdge22 Then
+	Else
+		MessageBox.Show("Error in selection. Please check that you have selected cylindrical faces adjacent to end face.", "Error")
+		Exit Sub
+	End If
+	
+	' Evaluate face area to match the tool requirement length.
+	Dim oEvalFaceLength As Double
+	Dim oEvalFaceLength1 As Double
+	oEvalFaceLength = Round(MaxOfMany(oFace1.Evaluator.Area,oFace2.Evaluator.Area)*10/MaxOfMany(dLength21,dLength11),1)
+	oEvalFaceLength1 = Round(MinOfMany(oFace1.Evaluator.Area,oFace2.Evaluator.Area)*10/MinOfMany(dLength21,dLength11),1)
+	
+	'Following code was removed as might not be relevant: if tube engraved different value will occure.
+	'Compare inside and outside length
+	'If oEvalFaceLength = oEvalFaceLength1 Then
+		'Else
+		'	MessageBox.Show("Face length do not match. Please check for modeling errors in one of the selected face.", "Error")
+		'Exit Sub
+	'End If
+
+	' Create an iFeatureDefinition object.
+	Dim oFeatures As PartFeatures
+	oFeatures = oPartDef.Features
+	Dim oiFeatureDef As iFeatureDefinition
+	
+	'Get iFeature file
+		Try
+			oiFeatureDef = oFeatures.iFeatures.CreateiFeatureDefinition( _
+			"\\VPFS1\Public\Inventor_Data\iFeature\SINGLE_BEAD_SAE_J1231.ide")
+		Catch
+			MessageBox.Show("iFeature file was not found. Please check if you have access to ""\\VPFS1\Public\Inventor_Data\iFeature\""", "File not found")
+		Exit Sub
+		End Try
+		
+	' Set the input.
+	Dim oInput As iFeatureInput
+	For Each oInput In oiFeatureDef.iFeatureInputs
+    	Dim oParamInput As iFeatureParameterInput
+    	Select Case oInput.Name
+			Case "End Tube Face"
+				Dim oPlaneInput As iFeatureSketchPlaneInput 
+				oPlaneInput = oInput
+				oPlaneInput.PlaneInput = oFace3
+			Case "TUBE_OUTSIDE_DIAMETER"
+				Try
+					oParamInput = oInput
+					oParamInput.Expression = IFEATURE_OD
+				Catch
+				MessageBox.Show("The diameter value "& IFEATURE_OD & " is not standard.", "Error")
+				Exit Sub
+				End Try
+			Case "TUBE_INSIDE_DIAMETER"
+				oParamInput = oInput
+				oParamInput.Expression = IFEATURE_ID
+   		 End Select
+	Next
+	
+	'** Look through the table to find the row where "TUBE_OUTSIDE_DIAMETER" is "IFEATURE_OD".
+    Dim oTable As iFeatureTable
+    oTable = oiFeatureDef.iFeatureTable
+	
+	' Find the "TUBE_OUTSIDE_DIAMETER" column.
+    Dim oColumn As iFeatureTableColumn
+    Dim bFoundDiameter As Boolean
+    bFoundDiameter = False
+    For Each oColumn In oTable.iFeatureTableColumns
+        If oColumn.DisplayHeading = "TUBE_OUTSIDE_DIAMETER" Then
+            bFoundDiameter = True
+            Exit For
+        End If
+    Next
+
+    If Not bFoundDiameter Then
+        MessageBox.Show("The column ""TUBE_OUTSIDE_DIAMETER"" was not found.", "Error")
+        Exit Sub
+    End If
+
+    ' Find the row in the "TUBE_OUTSIDE_DIAMETER" column with the value of "IFEATURE_OD"
+    Dim oCell As iFeatureTableCell
+    bFoundDiameter = False
+
+    For Each oCell In oColumn
+        If oCell.Value = IFEATURE_OD Then
+            bFoundDiameter = True
+            Exit For
+        End If
+    Next
+
+    If Not bFoundDiameter Then
+	
+        MessageBox.Show("The cell with value "& IFEATURE_OD & " was not found", "Error")
+        Exit Sub
+    End If
+
+    ' Set this row as the active row.
+    oiFeatureDef.ActiveTableRow = oCell.Row
+	
+	For Each oCell In oiFeatureDef.ActiveTableRow
+		If oCell.Value = "25 mm" Then
+			If oEvalFaceLength < 25 Then
+			MessageBox.Show("Tool requirement ""25 mm"" not respected", "Title")
+			Exit Sub
+			Else
+		End If
+		Else If oCell.Value = "12 mm"
+			If oEvalFaceLength < 12 Then
+			MessageBox.Show("Tool requirement ""12 mm"" not respected", "Title")
+			Exit Sub
+			Else
+			End If
+		End If
+	Next
+	
+    ' Create the iFeature.
+	Dim oiFeature As iFeature
+    Try
+	oiFeature = oFeatures.iFeatures.Add(oiFeatureDef)
+	Catch
+	MessageBox.Show("iFeature failed to create. Please check internal diameter value.", "iFeature failed")
+	Exit Sub
+	End Try
+End Sub

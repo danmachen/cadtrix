@@ -1,0 +1,53 @@
+Public Sub Main()
+PublishPDF()
+End Sub
+Public Sub PublishPDF()
+
+doc = ThisDoc.Document
+ 'check file type 
+If doc.DocumentType = kPartDocumentObject Then
+MessageBox.Show("This is a part file.", "iLogic")
+Else If doc.DocumentType = kAssemblyDocumentObject Then
+MessageBox.Show("This is an assembly file.", "iLogic")
+Else If iProperties.Value("Status", "Design State") = 3 Then
+MessageBox.Show("This file is released.", "iLogic")
+Else If doc.DocumentType = kDrawingDocumentObject
+' Get the PDF translator Add-In.
+Dim PDFAddIn As TranslatorAddIn
+PDFAddIn = ThisApplication.ApplicationAddIns.ItemById("{0AC6FD96-2F4D-42CE-8BE0-8AEA580399E4}")
+'Set a reference to the active document (the document to be published).
+Dim oDocument As Document
+oDocument = ThisApplication.ActiveDocument
+Dim oContext As TranslationContext
+oContext = ThisApplication.TransientObjects.CreateTranslationContext
+oContext.Type = kFileBrowseIOMechanism
+' Create a NameValueMap object
+Dim oOptions As NameValueMap
+oOptions = ThisApplication.TransientObjects.CreateNameValueMap
+' Create a DataMedium object
+Dim oDataMedium As DataMedium
+oDataMedium = ThisApplication.TransientObjects.CreateDataMedium
+' Check whether the translator has 'SaveCopyAs' options
+	If PDFAddIn.HasSaveCopyAsOptions(oDocument, oContext, oOptions) Then
+' Options for drawings...
+'oOptions.Value("All_Color_AS_Black") = 0
+'oOptions.Value("Remove_Line_Weights") = 0
+'oOptions.Value("Vector_Resolution") = 400
+oOptions.Value("Sheet_Range") = Inventor.PrintRangeEnum.kPrintAllSheets
+'oOptions.Value("Custom_Begin_Sheet") = 1
+'oOptions.Value("Custom_End_Sheet") = 2
+	End If
+'Set the destination file name
+oDataMedium.FileName = ThisDoc.Path & "\" & "UNRELEASED_" & ThisDoc.FileName(False) &".pdf"
+
+'Publish document.
+Call PDFAddIn.SaveCopyAs(oDocument, oContext, oOptions, oDataMedium)
+	'i = MessageBox.Show("Preview the PDF file?", "Preview",MessageBoxButtons.YesNo,MessageBoxIcon.Question)  
+	'If i = vbYes Then 
+	'ThisDoc.Launch(oDataMedium.FileName)  
+	'End If 
+
+End If	
+iLogicVb.UpdateWhenDone = True
+
+End Sub

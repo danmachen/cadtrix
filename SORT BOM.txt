@@ -1,0 +1,14 @@
+'sort parts list
+On Error Resume Next
+Dim oDrawDoc As DrawingDocument
+oDrawDoc = ThisApplication.ActiveDocument
+
+
+Dim oPartsList1 As PartsList
+oPartsList1 = oDrawDoc.ActiveSheet.PartsLists.Item(1)
+'If oPartsList1 Is Nothing Then Resume Next
+
+
+oPartsList1.Sort("PART NUMBER")
+oPartsList1.Renumber
+oPartsList1.SaveItemOverridesToBOM
