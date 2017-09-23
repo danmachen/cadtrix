@@ -37,11 +37,12 @@ oOptions.Value("Sheet_Range") = Inventor.PrintRangeEnum.kPrintAllSheets
 'oOptions.Value("Custom_Begin_Sheet") = 1
 'oOptions.Value("Custom_End_Sheet") = 2
 	End If
-'Set the destination file name
+'Set the destination file name (User can customise this with iproperties from the file or plain text
 oDataMedium.FileName = ThisDoc.Path & "\" & "UNRELEASED_" & ThisDoc.FileName(False) &".pdf"
 
 'Publish document.
 Call PDFAddIn.SaveCopyAs(oDocument, oContext, oOptions, oDataMedium)
+'To be used if the user wants to see an active preview of the released file
 	'i = MessageBox.Show("Preview the PDF file?", "Preview",MessageBoxButtons.YesNo,MessageBoxIcon.Question)  
 	'If i = vbYes Then 
 	'ThisDoc.Launch(oDataMedium.FileName)  
