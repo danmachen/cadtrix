@@ -1,8 +1,8 @@
 'This code can be input into iLogic to open up a 'save as' dialog box.
 'Allows the user to type in a filename and location
-'
 
-oDoc = ThisDoc.Document
+
+doc = ThisDoc.Document
 Dim oFileDlg As inventor.FileDialog = Nothing
 InventorVb.Application.CreateFileDialog(oFileDlg)
 If oDoc.DocumentType = kPartDocumentObject Then
@@ -12,6 +12,7 @@ oFileDlg.Filter = "Autodesk Inventor Assembly Files (*.iam)|*.iam"
 Else if oDoc.DocumentType = kDrawingDocumentObject Then
 oFileDlg.Filter = "Autodesk Inventor Drawing Files (*.idw)|*.idw"
 End If
+'Change initial file directory to any custom location such as a released PDFs location
 oFileDlg.InitialDirectory = ThisDoc.WorkspacePath()
 'Input iproperties or text to determine initial filename selection 
 oFileDlg.FileName = iProperties.Value("Project", "Part Number")
