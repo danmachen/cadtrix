@@ -1,0 +1,26 @@
+'This code can be input into iLogic to open up a 'save as' dialog box.
+'Allows the user to type in a filename and location
+'
+
+oDoc = ThisDoc.Document
+Dim oFileDlg As inventor.FileDialog = Nothing
+InventorVb.Application.CreateFileDialog(oFileDlg)
+If oDoc.DocumentType = kPartDocumentObject Then
+oFileDlg.Filter = "Autodesk Inventor Part Files (*.ipt)|*.ipt"
+Else if oDoc.DocumentType = kAssemblyDocumentObject Then
+oFileDlg.Filter = "Autodesk Inventor Assembly Files (*.iam)|*.iam"
+Else if oDoc.DocumentType = kDrawingDocumentObject Then
+oFileDlg.Filter = "Autodesk Inventor Drawing Files (*.idw)|*.idw"
+End If
+oFileDlg.InitialDirectory = ThisDoc.WorkspacePath()
+'Input iproperties or text to determine initial filename selection 
+oFileDlg.FileName = iProperties.Value("Project", "Part Number")
+oFileDlg.CancelError = True
+On Error Resume Next
+oFileDlg.ShowSave()
+If Err.Number <> 0 Then
+MessageBox.Show("No File Saved.", "iLogic: Dialog Canceled")
+ElseIf oFileDlg.FileName <> "" Then
+MyFile = oFileDlg.FileName
+oDoc.SaveAs(MyFile, False) 'True = Save As Copy & False = Save As
+End If
