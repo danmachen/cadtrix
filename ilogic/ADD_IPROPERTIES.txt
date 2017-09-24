@@ -1,7 +1,7 @@
 ' ---------------------start of iLogic code---------------------
 'This code allows the user to define two custom iproperties within the part or drawing and enter them into an inputbox. These properties wil be defined as custom iproperties within the file. 
 
-Dim propertyName1 As String = "New Property"
+Dim propertyName1 As String = "New Property 1"
 Dim propertyName2 As String = "New Property 2"
 
 
@@ -29,7 +29,7 @@ Dim strNewProp2 As String
 
 'get values from user
 strNewProp1 = InputBox("Enter input prompt for user to define property 1", "iLogic", "N/A") 'N/A default value
-strNewProp2 = InputBox("Enter input prompt for user to define property 1", "iLogic", "N/A") 'N/A default value
+strNewProp2 = InputBox("Enter input prompt for user to define property 2", "iLogic", "N/A") 'N/A default value
 
 'set custom property values
 iProperties.Value("Custom", "New Property 1") = strNewProp1
