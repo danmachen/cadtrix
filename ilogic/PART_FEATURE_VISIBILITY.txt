@@ -1,0 +1,15 @@
+Dim oDoc As PartDocument
+oDoc= ThisDoc.Document
+
+'get user input as True or False
+wfBoolean = InputRadioBox("Turn all Work Features On/Off", "On", "Off", False, "iLogic") 
+'
+For Each oWorkPlane In oDoc.ComponentDefinition.WorkPlanes
+
+
+oWorkPlane.Visible = wfBoolean
+'End If
+
+Next
+'update the files
+InventorVb.DocumentUpdate()
