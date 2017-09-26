@@ -25,12 +25,12 @@ oAssDoc = ThisApplication.ActiveDocument
 Dim oConstraint As AssemblyConstraint
 
 
-RUSure = MessageBox.Show _
-("Are you sure you want to Delete all sick constraints?",  _
+Check = MessageBox.Show _
+("Are you sure you want to DELETE all sick constraints?",  _
 "iLogic",MessageBoxButtons.YesNo)
 
 
-If RUSure = vbNo Then
+If Check = vbNo Then
 Return
 Else
           i = 0
